@@ -1,0 +1,20 @@
+from django.db import models
+
+# Create your models here.
+class Study(models.Model):
+	title = models.CharField() 		# Title
+	# The following sections are covered by other classes through ForeignKeys
+	# 	Author
+	# 	PubDate, short for Publication date
+	# 	Sections 
+	# 	Changelog
+
+class Author(models.Model):
+	"""Class contains
+	study = models.ForeignKey(Study)	# ForeignKey to Study
+	name = models.CharField() # Author name
+	inst = models.CharField()		# Author's institution
+
+class PubDate(models.Model):
+	study = models.ForeignKey(Study)	# ForeignKey to Study
+	date = models.ForeignKey
