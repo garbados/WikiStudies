@@ -5,14 +5,18 @@ import datetime
 class User(models.Model):
 	"""A user."""
 	user = models.CharField(max_length=32)		# username
+	pw = models.CharField(max_length=64)		# user's password. Will figure out how to encode later.
 	email = models.EmailField()					# user's email
 	name = models.CharField(max_length=64)		# user's real name
+	join_date = models.DateTimeField()			# date when the user joined WikiStudies
 	PRIV = {("user","User"), 					# Content creator and consumer
 		("admin","Administrator"),				# Content administrator: blocks, bans, suspends, warns, etc.
 		("super","Super-admin")}				# Can appoint admins, plus admin powers
 	auth = models.CharField(max_length=5,choices = PRIV) # user privilege level
 	def __unicode__(self):
 		return self.user
+	def age(self):
+		return str(datetime.datetime.now() - self.join_date)
 
 class Study(models.Model):
 	"""A scientific study"""
@@ -28,14 +32,14 @@ class Author(models.Model):
 	study = models.ForeignKey(Study)	# Study being authored
 	user = models.ForeignKey(User)		# User authoring study
 	def __unicode__(self):
-		return self.user
+		return unicode(self.user)
 	
 class Section(models.Model):
 	"""An individual section of the study, such as hypothesis, findings, conclusion, or bibliography."""
 	study = models.ForeignKey(Study)
 	date = models.DateTimeField()				# Date of section's creation
 	title = models.CharField(max_length=32)		# Section title
-	text = models.CharField(max_length=4096)	# Section text
+	text = models.TextField()					# Section text
 	# things to think about: images, graphs, formulas, etc
 	def __unicode__(self):
 		return self.title
@@ -45,7 +49,7 @@ class Comment(models.Model):
 	section = models.ForeignKey(Section)		# Section being commented
 	user = models.ForeignKey(User)				# Comment author
 	date = models.DateTimeField()				# Comment post date/time
-	text = models.CharField(max_length=1024)	# Comment text
+	text = models.TextField()					# Comment text
 	# Things to think about: refining what the comment refers to specifically
 	
 class Review(models.Model):
@@ -54,7 +58,7 @@ class Review(models.Model):
 	user = models.ForeignKey(User)				# Review author
 	title = models.CharField(max_length=64)		# Review title
 	date = models.DateTimeField()				# Review post date/time
-	text = models.CharField(max_length=4096)	# Review text
+	text = models.TextField()					# Review text
 	save = models.BooleanField()				# False if the review has been published, true if unpublished
 	# use "save" to save reviews before publishing, since their longer form means
 	# we should probably give users more time to craft them than may be available
