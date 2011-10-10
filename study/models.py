@@ -1,44 +1,32 @@
 from django.db import models
+from django.contrib.auth.models import User
 import datetime
 
-# Create your models here.
-class User(models.Model):
-	"""A user."""
-	user = models.CharField(max_length=32)		# username
-	pw = models.CharField(max_length=64)		# user's password. Will figure out how to encode later.
-	email = models.EmailField()					# user's email
-	name = models.CharField(max_length=64)		# user's real name
-	join_date = models.DateTimeField()			# date when the user joined WikiStudies
-	PRIV = {("user","User"), 					# Content creator and consumer
-		("admin","Administrator"),				# Content administrator: blocks, bans, suspends, warns, etc.
-		("super","Super-admin")}				# Can appoint admins, plus admin powers
-	auth = models.CharField(max_length=5,choices = PRIV) # user privilege level
+# Create your models here
+class Tag(models.Model):
+	"""Tags to help organize studies by topic"""
+	text = models.CharField(max_length=32)		# The tag itself
+	# Think about upvote downvote tagging, so the community can generate tags
 	def __unicode__(self):
-		return self.user
-	def age(self):
-		return str(datetime.datetime.now() - self.join_date)
+		return self.text
 
 class Study(models.Model):
 	"""A scientific study"""
 	title = models.CharField(max_length=128) 	# Title
+	tags = models.ManyToManyField(Tag)			# Tag set
+	authors = models.ManyToManyField(User)      # Author set
 	date = models.DateTimeField()				# Date of study's creation
 	def __unicode__(self):
 		return self.title
 	def age(self):
 		return str(datetime.datetime.now() - self.date)
 	
-class Author(models.Model):
-	"""Connects users with studies they've authored, and allows several users to author a study"""
-	study = models.ForeignKey(Study)	# Study being authored
-	user = models.ForeignKey(User)		# User authoring study
-	def __unicode__(self):
-		return unicode(self.user)
-	
 class Section(models.Model):
 	"""An individual section of the study, such as hypothesis, findings, conclusion, or bibliography."""
-	study = models.ForeignKey(Study)
+	study = models.ForeignKey(Study)            # Study to which the section belongs
 	date = models.DateTimeField()				# Date of section's creation
-	title = models.CharField(max_length=32)		# Section title
+	citations = models.ManyToManyField(Study, related_name='citations')   # Citation set
+	title = models.CharField(max_length=64)		# Section title
 	text = models.TextField()					# Section text
 	# things to think about: images, graphs, formulas, etc
 	def __unicode__(self):
@@ -66,20 +54,12 @@ class Review(models.Model):
 	def __unicode__(self):
 		return self.title
 	
-class Tag(models.Model):
-	"""Tags to help organize studies by topic"""
-	study = models.ForeignKey(Study)			# Study being tagged
-	text = models.CharField(max_length=32)		# The tag itself
-	# Think about upvote downvote tagging, so the community can generate tags
-	def __unicode__(self):
-		return self.text
-	
-class Citation(models.Model):
-	"""When one study cites another"""
-	study = models.ForeignKey(Study,related_name="Citer")	# Study citing the other
-	cite = models.ForeignKey(Study,related_name="Cited")	# Study being cited
-	def __unicode__(self):
-		return str(self.study) + " cited " + str(self.cite)
+#class Ext_citation(models.Model):
+#	"""When one study cites another from outside of wikistudies"""
+#	study = models.ForeignKey(Study,related_name="Citer")	# Study citing the other
+#	cite = models.ForeignKey(Study,related_name="Cited")	# Study being cited
+#	def __unicode__(self):
+#		return str(self.study) + " cited " + str(self.cite)
 	
 class Vote(models.Model):
 	"""A user's vote, 1-5, on studies"""
@@ -89,28 +69,3 @@ class Vote(models.Model):
 	vote = models.IntegerField(choices = VALUES)		# Vote
 	def __unicode__(self):
 		return str(self.vote) + " by " + str(self.user) + " on " + str(self.study)
-	
-class ReportStudy(models.Model):
-	"""Reports a study for abuse."""
-	study = models.ForeignKey(Study)		# Study being reported
-	user = models.ForeignKey(User)			# User reporting the study
-	text = models.CharField(max_length=512)	# Text explaining reason for report
-	
-class ReportSection(models.Model):
-	"""Reports a section for abuse."""
-	section = models.ForeignKey(Section)	# Section being reported
-	user = models.ForeignKey(User)			# User reporting the section
-	text = models.CharField(max_length=512)	# Text explaining reason for report
-	
-class ReportReview(models.Model):
-	"""Reports a review for abuse."""
-	review = models.ForeignKey(Review)		# Review being reported
-	user = models.ForeignKey(User)			# User reporting the review
-	text = models.CharField(max_length=512)	# Text explaining reason for report
-	
-class ReportComment(models.Model):
-	"""Reports a comment for abuse."""
-	comment = models.ForeignKey(Comment)	# Comment being reported
-	user = models.ForeignKey(User)			# User reporting the comment
-	text = models.CharField(max_length=512)	# Text explaining reason for report
-	# Consider upvote downvote system for comments instead
